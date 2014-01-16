@@ -35,7 +35,7 @@ MainLoop::~MainLoop()
 
 bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback) throw(std::runtime_error)
 {
-	if (m_monitors.find(fd) != m_monitors.end())
+	if (m_epoll == -1 || m_monitors.find(fd) != m_monitors.end())
 		return false;
 
 	Monitor *monitor = new Monitor(fd, callback);
@@ -57,6 +57,9 @@ bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 
 bool MainLoop::removeMonitor(int fd) throw(std::runtime_error)
 {
+	if (m_epoll == -1)
+		return false;
+
 	MonitorMap::iterator it = m_monitors.find(fd);
 	if (it == m_monitors.end())
 		return false;
