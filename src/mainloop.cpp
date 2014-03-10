@@ -33,7 +33,7 @@ MainLoop::~MainLoop()
 		while (::close(m_epoll) == -1 && errno == EINTR);
 }
 
-bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback) throw(std::runtime_error)
+bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 {
 	if (m_epoll == -1 || m_monitors.find(fd) != m_monitors.end())
 		return false;
@@ -41,13 +41,28 @@ bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 	Monitor *monitor = new Monitor(fd, callback);
 
 	::epoll_event event;
-	event.events = (direction == Out ? EPOLLOUT : EPOLLIN);
+	switch (direction)
+	{
+		case In:
+			event.events = EPOLLIN;
+			break;
+
+		case Out:
+			event.events = EPOLLOUT;
+			break;
+
+		case InOut:
+			event.events = EPOLLIN | EPOLLOUT;
+			break;
+
+		default:
+			return false;
+	}
 	event.data.ptr = monitor;
 	if (::epoll_ctl(m_epoll, EPOLL_CTL_ADD, fd, &event) == -1)
 	{
-		int err = errno;
 		delete monitor;
-		throw std::runtime_error(std::strerror(err));
+		return false;
 	}
 
 	m_monitors[fd] = monitor;
@@ -55,7 +70,7 @@ bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 	return true;
 }
 
-bool MainLoop::removeMonitor(int fd) throw(std::runtime_error)
+bool MainLoop::removeMonitor(int fd)
 {
 	if (m_epoll == -1)
 		return false;
@@ -66,7 +81,7 @@ bool MainLoop::removeMonitor(int fd) throw(std::runtime_error)
 
 	// Notice: Linux < 2.6.9 requires a non-null event argument
 	if (::epoll_ctl(m_epoll, EPOLL_CTL_DEL, fd, 0) == -1)
-		throw std::runtime_error(std::strerror(errno));
+		return false;
 
 	delete it->second;
 	m_monitors.erase(it);
@@ -131,7 +146,24 @@ int MainLoop::run() throw(std::runtime_error)
 		{
 			Monitor *monitor = reinterpret_cast<Monitor *>(events[i].data.ptr);
 			if (monitor->callback)
-				monitor->callback(*this, monitor->fd);
+			{
+				Direction dir;
+				switch (events[i].events & (EPOLLIN|EPOLLOUT))
+				{
+					case EPOLLIN:
+						dir = In;
+						break;
+
+					case EPOLLOUT:
+						dir = Out;
+						break;
+
+					case EPOLLIN | EPOLLOUT:
+						dir = InOut;
+						break;
+				}
+				monitor->callback(*this, monitor->fd, dir);
+			}
 		}
 
 		// Handle expired timers

@@ -21,12 +21,13 @@ class MainLoop
 		enum Direction
 		{
 			In,
-			Out
+			Out,
+			InOut
 		};
 
-		typedef std::function<void(MainLoop&,int)> Callback;
-		bool addMonitor(int fd, Direction direction, const Callback &callback) throw(std::runtime_error);
-		bool removeMonitor(int fd) throw(std::runtime_error);
+		typedef std::function<void(MainLoop&, int, Direction)> Callback;
+		bool addMonitor(int fd, Direction direction, const Callback &callback);
+		bool removeMonitor(int fd);
 
 		void exit(int code);
 
