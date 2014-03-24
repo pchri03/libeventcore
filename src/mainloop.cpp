@@ -58,7 +58,7 @@ bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 		default:
 			return false;
 	}
-	event.data.ptr = monitor;
+	event.data.fd = fd;
 	if (::epoll_ctl(m_epoll, EPOLL_CTL_ADD, fd, &event) == -1)
 	{
 		delete monitor;
@@ -144,7 +144,11 @@ int MainLoop::run() throw(std::runtime_error)
 		// Handle events
 		for (int i = 0; i != count; ++i)
 		{
-			Monitor *monitor = reinterpret_cast<Monitor *>(events[i].data.ptr);
+			auto it = m_monitors.find(events[i].data.fd);
+			if (it == m_monitors.end())
+				continue;
+
+			Monitor *monitor = it->second;
 			if (monitor->callback)
 			{
 				Direction dir;
