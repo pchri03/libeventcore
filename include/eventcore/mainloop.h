@@ -31,7 +31,7 @@ class MainLoop
 
 		void exit(int code);
 
-		int run() throw(std::runtime_error);
+		int run();
 
 	private:
 		void registerTimer(Timer *timer);
@@ -48,9 +48,6 @@ class MainLoop
 
 		typedef std::map<int, Monitor*> MonitorMap;
 		typedef std::multimap<unsigned long long int, Timer*> TimerMap;
-
-	private:
-		static unsigned long long int getTime() throw(std::runtime_error);
 
 	private:
 		int m_epoll;

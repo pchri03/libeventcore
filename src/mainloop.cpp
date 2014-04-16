@@ -121,7 +121,7 @@ void MainLoop::exit(int code)
 	}
 }
 
-int MainLoop::run() throw(std::runtime_error)
+int MainLoop::run()
 {
 	while (m_epoll != -1 && (m_monitors.size() != 0 || m_timers.size() != 0))
 	{
@@ -139,7 +139,7 @@ int MainLoop::run() throw(std::runtime_error)
 		if (count == -1 && errno == EINTR)
 			continue;
 		if (count == -1)
-			throw std::runtime_error(std::strerror(errno));
+			break;
 
 		// Handle events
 		for (int i = 0; i != count; ++i)
