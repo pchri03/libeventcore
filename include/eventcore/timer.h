@@ -2,7 +2,6 @@
 #define INCLUDE_EVENTCORE_TIMER_H
 
 #include <functional>
-#include <stdexcept>
 
 namespace eventcore
 {
@@ -17,7 +16,7 @@ class Timer
 		Timer(MainLoop *mainLoop, const Callback &callback = Callback());
 		~Timer();
 
-		void start(unsigned long int timeout) throw(std::runtime_error);
+		void start(unsigned long int timeout);
 		void stop();
 
 		MainLoop *mainLoop() const;
@@ -25,7 +24,7 @@ class Timer
 		void setCallback(const Callback &callback);
 		const Callback &callback() const;
 
-		unsigned long int timeout() const throw(std::runtime_error);
+		unsigned long int timeout() const;
 		unsigned long long int expiration() const;
 
 		static unsigned long long int currentTime();

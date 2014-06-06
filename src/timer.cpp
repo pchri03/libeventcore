@@ -1,7 +1,6 @@
 #include "eventcore/timer.h"
 #include "eventcore/mainloop.h"
 
-#include <stdexcept>
 #include <cstring>
 #include <cerrno>
 
@@ -22,7 +21,7 @@ Timer::~Timer()
 	m_mainLoop->unregisterTimer(this);
 }
 
-void Timer::start(unsigned long int timeout) throw(std::runtime_error)
+void Timer::start(unsigned long int timeout)
 {
 	m_mainLoop->unregisterTimer(this);
 	
@@ -56,7 +55,7 @@ unsigned long long int Timer::expiration() const
 	return m_expiration;
 }
 
-unsigned long int Timer::timeout() const throw(std::runtime_error)
+unsigned long int Timer::timeout() const
 {
 	unsigned long long int now = currentTime();
 	if (now >= m_expiration)
@@ -73,10 +72,18 @@ unsigned long long int Timer::currentTime()
 #endif // CLOCK_MONOTONIC_RAW
 
 	timespec tp;
-	if (::clock_gettime(CLOCK_MONOTONIC_RAW, &tp) == -1)
-		throw std::runtime_error(std::strerror(errno));
 
-	return (unsigned long long int)tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
+	// First, try Linux specific monotonic timer
+	if (::clock_gettime(CLOCK_MONOTONIC_RAW, &tp) == -1)
+	{
+		if (errno == EINVAL)
+		{
+			if (::clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp) == -1)
+				return 0UL;
+		}
+	}
+
+	return static_cast<unsigned long long int>(tp.tv_sec) * 1000 + tp.tv_nsec / 1000000;
 }
 
 } // eventcore
