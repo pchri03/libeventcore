@@ -3,7 +3,6 @@
 
 #include <cstring>
 #include <cerrno>
-#include <stdexcept>
 
 #include <sys/epoll.h>
 #include <unistd.h>
@@ -18,10 +17,7 @@ MainLoop::MainLoop()
 	, m_nextTimerId(0)
 {
 	if (m_epoll == -1)
-	{
 		m_exitCode = -1;
-		throw std::runtime_error(std::strerror(errno));
-	}
 }
 
 MainLoop::~MainLoop()
