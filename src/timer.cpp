@@ -93,13 +93,7 @@ unsigned long long int Timer::currentTime()
 
 	// First, try Linux specific monotonic timer
 	if (::clock_gettime(CLOCK_MONOTONIC_RAW, &tp) == -1)
-	{
-		if (errno == EINVAL)
-		{
-			if (::clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp) == -1)
-				return 0UL;
-		}
-	}
+		return 0UL;
 
 	return static_cast<unsigned long long int>(tp.tv_sec) * 1000 + tp.tv_nsec / 1000000;
 }
