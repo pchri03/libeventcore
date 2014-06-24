@@ -34,6 +34,7 @@ void SignalHandler::addSignal(int signum, const Handler &handler)
 	if (!sigismember(&m_signals, signum))
 	{
 		sigaddset(&m_signals, signum);
+		sigprocmask(SIG_BLOCK, &m_signals, NULL);
 		if (m_fd == -1)
 		{
 			// Notice: signalfd requires Linux 2.6.26
@@ -52,6 +53,11 @@ void SignalHandler::removeSignal(int signum)
 {
 	if (!sigismember(&m_signals, signum))
 		return;
+
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, signum);
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
 
 	m_handlers.erase(signum);
 	if (m_fd != -1 && m_handlers.empty())
