@@ -1,4 +1,4 @@
-SRC=src/mainloop.cpp src/timer.cpp
+SRC=src/mainloop.cpp src/timer.cpp src/signalhandler.cpp
 OBJS=$(SRC:.cpp=.o)
 NAME=libeventcore
 TARGET=$(NAME).a
