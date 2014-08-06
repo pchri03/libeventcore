@@ -31,7 +31,7 @@ class MainLoop
 			InOut
 		};
 
-		typedef std::function<void(MainLoop&, int, Direction)> Callback;
+		typedef std::function<void(Direction)> Callback;
 		bool addMonitor(int fd, Direction direction, const Callback &callback);
 		bool removeMonitor(int fd);
 

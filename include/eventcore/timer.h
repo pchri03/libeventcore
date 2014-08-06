@@ -17,7 +17,7 @@ class MainLoop;
 class Timer
 {
 	public:
-		typedef std::function<void(Timer&)> Callback;
+		typedef std::function<void()> Callback;
 
 		Timer(MainLoop *mainLoop, const Callback &callback = Callback());
 		~Timer();

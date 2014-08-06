@@ -168,7 +168,7 @@ int MainLoop::run()
 						dir = InOut;
 						break;
 				}
-				monitor->callback(*this, monitor->fd, dir);
+				monitor->callback(dir);
 			}
 		}
 
@@ -179,7 +179,7 @@ int MainLoop::run()
 			Timer *timer = it->second;
 			m_timers.erase(it);
 
-			timer->callback()(*timer);
+			timer->callback()();
 		}
 	}
 
