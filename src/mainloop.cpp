@@ -10,6 +10,10 @@
 #include <cstring>
 #include <cerrno>
 
+#ifdef MAINLOOP_THREADS
+#include <mutex>
+#endif // MAINLOOP_THREADS
+
 #include <sys/epoll.h>
 #include <unistd.h>
 
@@ -37,6 +41,10 @@ MainLoop::~MainLoop()
 
 bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 {
+#ifdef MAINLOOP_THREADS
+	std::unique_lock<std::mutex> lock(m_mutex);
+#endif // MAINLOOP_THREADS
+
 	if (m_epoll == -1 || m_monitors.find(fd) != m_monitors.end())
 		return false;
 
@@ -74,6 +82,10 @@ bool MainLoop::addMonitor(int fd, Direction direction, const Callback &callback)
 
 bool MainLoop::removeMonitor(int fd)
 {
+#ifdef MAINLOOP_THREADS
+	std::unique_lock<std::mutex> lock(m_mutex);
+#endif // MAINLOOP_THREADS
+
 	if (m_epoll == -1)
 		return false;
 
@@ -93,6 +105,10 @@ bool MainLoop::removeMonitor(int fd)
 
 void MainLoop::unregisterTimer(Timer *timer)
 {
+#ifdef MAINLOOP_THREADS
+	std::unique_lock<std::mutex> lock(m_mutex);
+#endif // MAINLOOP_THREADS
+
 	unsigned long long int expiration = timer->expiration();
 
 	for (
@@ -110,6 +126,10 @@ void MainLoop::unregisterTimer(Timer *timer)
 
 void MainLoop::registerTimer(Timer *timer)
 {
+#ifdef MAINLOOP_THREADS
+	std::unique_lock<std::mutex> lock(m_mutex);
+#endif // MAINLOOP_THREADS
+
 	m_timers.insert(TimerMap::value_type(timer->expiration(), timer));
 }
 
@@ -136,12 +156,16 @@ int MainLoop::run()
 		}
 
 		// Wait for events
-		epoll_event events[16];
+		epoll_event events[32];
 		int count = ::epoll_wait(m_epoll, events, sizeof(events) / sizeof(events[0]), timeout);
 		if (count == -1 && errno == EINTR)
 			continue;
 		if (count == -1)
 			break;
+
+#ifdef MAINLOOP_THREADS
+		std::unique_lock<std::mutex> lock(m_mutex);
+#endif // MAINLOOP_THREADS
 
 		// Handle events
 		for (int i = 0; i != count; ++i)
@@ -168,7 +192,13 @@ int MainLoop::run()
 						dir = InOut;
 						break;
 				}
+#ifdef MAINLOOP_THREADS
+				lock.unlock();
+#endif // MAINLOOP_THREADS
 				monitor->callback(dir);
+#ifdef MAINLOOP_THREADS
+				lock.lock();
+#endif // MAINLOOP_THREADS
 			}
 		}
 
@@ -179,7 +209,13 @@ int MainLoop::run()
 			Timer *timer = it->second;
 			m_timers.erase(it);
 
+#ifdef MAINLOOP_THREADS
+			lock.unlock();
+#endif // MAINLOOP_THREADS
 			timer->callback()();
+#ifdef MAINLOOP_THREADS
+			lock.lock();
+#endif // MAIN_LOOP_THREADS
 		}
 	}
 

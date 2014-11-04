@@ -11,6 +11,10 @@
 #include <functional>
 #include <stdexcept>
 
+#ifdef MAINLOOP_THREADS
+#include <mutex>
+#endif // MAINLOOP_THREADS
+
 namespace eventcore
 {
 
@@ -56,6 +60,9 @@ class MainLoop
 		typedef std::multimap<unsigned long long int, Timer*> TimerMap;
 
 	private:
+#ifdef MAINLOOP_THREADS
+		std::mutex m_mutex;
+#endif // MAINLOOP_THREADS
 		int m_epoll;
 		int m_exitCode;
 		int m_nextTimerId;
