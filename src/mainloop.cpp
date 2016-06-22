@@ -191,6 +191,9 @@ int MainLoop::run()
 					case EPOLLIN | EPOLLOUT:
 						dir = InOut;
 						break;
+
+					default:
+						dir = Error;
 				}
 #ifdef MAINLOOP_THREADS
 				lock.unlock();

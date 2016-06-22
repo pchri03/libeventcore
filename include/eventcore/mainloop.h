@@ -30,6 +30,7 @@ class MainLoop
 
 		enum Direction
 		{
+			Error,
 			In,
 			Out,
 			InOut
